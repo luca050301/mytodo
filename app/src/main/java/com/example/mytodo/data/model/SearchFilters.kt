@@ -1,4 +1,4 @@
-package com.example.mytodo.data
+package com.example.mytodo.data.model
 
 import java.time.LocalDateTime
 

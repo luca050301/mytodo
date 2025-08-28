@@ -10,8 +10,8 @@ data class TodoEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val title: String,
     val date: LocalDateTime,
-    val label: String,
-    val description: String,
+    val label: String?,
+    val description: String?,
     val createdAt: Instant = Instant.now(),
     val isCompleted: Boolean = false
 )

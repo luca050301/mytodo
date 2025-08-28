@@ -21,6 +21,11 @@ interface TodoDao {
     @Query("SELECT * FROM todos WHERE id = :id")
     suspend fun getById(id: Long): TodoEntity?
 
+    /**
+     * Search to-dos by a substring query on title and description, label,
+     * start date, end date and completed status
+     * Sort by date, title, created time or label
+     */
     @Query(
         """
         SELECT * FROM todos
@@ -30,11 +35,11 @@ interface TodoDao {
         AND (:dateIsBefore IS NULL OR date <= :dateIsBefore)
         AND (:hideCompleted = 0 OR isCompleted = 0)
         ORDER BY 
-        CASE WHEN :sort = 'default' THEN date END ASC,
-        CASE WHEN :sort = 'date ASC' THEN date END DESC,
-        CASE WHEN :sort = 'title ASC' THEN title END ASC,
-        CASE WHEN :sort = 'createdAt ASC' THEN createdAt END DESC,
-        CASE WHEN :sort = 'label ASC' THEN label END ASC
+        CASE WHEN :sort = 'DEFAULT' THEN date END ASC,
+        CASE WHEN :sort = 'DATE' THEN date END ASC,
+        CASE WHEN :sort = 'NAME' THEN title COLLATE NOCASE END ASC,
+        CASE WHEN :sort = 'CREATED_AT' THEN createdAt END DESC,
+        CASE WHEN :sort = 'LABEL' THEN label END COLLATE NOCASE ASC
         
     """
     )
@@ -55,5 +60,17 @@ interface TodoDao {
 
     @Query("DELETE FROM todos WHERE isCompleted = 1") // booleans require API level 30
     suspend fun deleteCompleted()
+
+    /**
+     * Get a flow of all currently used labels
+     */
+    @Query("SELECT DISTINCT label FROM todos WHERE label IS NOT NULL AND label != ''")
+    fun observeLabels(): Flow<List<String>>
+
+    /**
+     * Search the currently available labels that contain a query string
+     */
+    @Query("SELECT DISTINCT label FROM todos WHERE label IS NOT NULL AND label != '' AND label LIKE '%' || :query || '%'")
+    fun observeLabelsSearch(query: String): Flow<List<String>>
 
 }

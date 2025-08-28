@@ -5,13 +5,13 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -23,6 +23,8 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
@@ -44,11 +46,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.mytodo.data.Todo
+import com.example.mytodo.data.model.SortType
+import com.example.mytodo.data.model.Todo
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Preview
@@ -62,7 +66,10 @@ fun TodoListViewScreen(
     var currentTodoId by remember { mutableStateOf<Long?>(null) }
     val todoItems by viewModel.todoItems.collectAsState()
     val searchFilters by viewModel.searchFilters.collectAsState()
+    val labels by viewModel.labels.collectAsState()
+
     Scaffold(
+        // top app bar
         topBar = {
             TopAppBar(
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -86,36 +93,26 @@ fun TodoListViewScreen(
                 .then(modifier)
         ) {
             Column {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .wrapContentHeight(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    TextField(
-                        value = searchFilters.query ?: "",
-                        onValueChange = {
-                            viewModel.setSearchFilters(
-                                searchFilters.copy(query = it)
-                            )
-                        },
-                        modifier = Modifier
-                            .weight(1f)
-                            .padding(10.dp),
-                        placeholder = {
-                            Text(text = "Search")
-                        },
-                        trailingIcon = {
-                            Icon(
-                                imageVector = Icons.Default.Search,
-                                contentDescription = null
-                            )
-                        }
-
-                    )
-                    FilterButton(text = "Filter", onClick = {
-                    })
-                }
+                // search and filter
+                SearchFilters(
+                    onSearchChange = {
+                        viewModel.setSearchFilters(
+                            searchFilters.copy(query = it)
+                        )
+                    },
+                    searchQuery = searchFilters.query,
+                    onLabelFilterChange = {
+                        if (it == null)
+                            viewModel.setSearchFilters(searchFilters.copy(oneOfLabels = null))
+                        else
+                            viewModel.setSearchFilters(searchFilters.copy(oneOfLabels = setOf(it)))
+                    },
+                    onSortChange = {
+                        it?.let { viewModel.setSort(SortType.valueOf(it)) }
+                    },
+                    labels = labels
+                )
+                // to-do list
                 LazyColumn {
                     items(todoItems) { todoItem ->
                         TodoCard(
@@ -133,12 +130,11 @@ fun TodoListViewScreen(
                             modifier = Modifier
                                 .fillMaxSize()
                         )
-
-
                     }
 
                 }
             }
+            // add button
             FloatingActionButton(
                 onClick = {
                     onNavigateToCreateEdit(null)
@@ -149,10 +145,10 @@ fun TodoListViewScreen(
                     .align(
                         Alignment.BottomEnd
                     )
-
             ) {
                 Icon(imageVector = Icons.Default.Add, contentDescription = "Add Todo")
             }
+            // dialog for delete confirmation
             DeleteDialog(
                 isActive = showDeleteDialog,
                 onConfirm = {
@@ -168,7 +164,54 @@ fun TodoListViewScreen(
 
 
 }
+// currently supports:
+// - search query for title and description
+// - filter by one label
+// - sort by one criterion
+@Composable
+fun SearchFilters(
+    modifier: Modifier = Modifier,
+    searchQuery: String? = "",
+    onSearchChange: (String) -> Unit,
+    onLabelFilterChange: (String?) -> Unit,
+    onSortChange: (String?) -> Unit,
+    labels: List<String> = emptyList(),
+) {
+    // search bar
+    TextField(
+        value = searchQuery ?: "",
+        onValueChange = onSearchChange,
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 10.dp), placeholder = {
+            Text(text = "Search")
+        },
+        trailingIcon = {
+            Icon(
+                imageVector = Icons.Default.Search,
+                contentDescription = null
+            )
+        }
 
+    )
+    // filter and sort buttons
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+    ) {
+        // label filter
+        FilterButton(text = "Label", options = labels, onClick = onLabelFilterChange)
+
+        // sort
+        FilterButton(
+            text = "Sort",
+            options = SortType.entries.map { it.toString() }.toList(),
+            onClick = onSortChange
+        )
+    }
+}
+
+// to-do card with expandable description
 @Composable
 fun TodoCard(
     todo: Todo,
@@ -188,6 +231,7 @@ fun TodoCard(
                 onClick = { isExpanded = !isExpanded }
             )
     ) {
+        // column for main content and expandable description
         Column {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -196,38 +240,55 @@ fun TodoCard(
                     .fillMaxWidth()
                     .padding(4.dp)
             ) {
+                // isCompleted checkbox
                 Checkbox(checked = todo.isCompleted, onCheckedChange = oncheckedChange)
+                // title
                 Text(
                     text = todo.title,
                     textDecoration = if (todo.isCompleted) TextDecoration.LineThrough else null,
                     modifier = Modifier.weight(1f)
                 )
+                Spacer(
+                    Modifier.width(10.dp)
+                )
+                // date and label column
                 Column(
                     modifier = Modifier.weight(1f)
-
                 ) {
                     Text(
                         text = todo.date.toLocalDate().toString(),
                     )
-                    Label(text = todo.label)
+                    if (!todo.label.isNullOrEmpty())
+                        Label(text = todo.label)
                 }
-
+                // action button column (delete, edit)
                 Column(
-                    modifier = Modifier.weight(0.5f)
+                    modifier = Modifier.weight(0.3f)
                 ) {
+                    // edit button
                     IconButton(
                         onClick = onEditClick
                     ) {
-                        Icon(imageVector = Icons.Default.Edit, contentDescription = "Edit")
+                        Icon(
+                            imageVector = Icons.Default.Edit,
+                            contentDescription = "Edit",
+                            tint = Color.Blue
+                        )
                     }
+                    // delete button
                     IconButton(
                         onClick = onDeleteClick
                     ) {
-                        Icon(imageVector = Icons.Default.Delete, contentDescription = "Delete")
+                        Icon(
+                            imageVector = Icons.Default.Delete,
+                            contentDescription = "Delete",
+                            tint = Color.Red
+                        )
                     }
                 }
             }
-            if (isExpanded) {
+            // expandable description
+            if (isExpanded && !todo.description.isNullOrEmpty()) {
                 Text(
                     text = todo.description,
                     modifier = Modifier
@@ -238,22 +299,52 @@ fun TodoCard(
         }
     }
 }
-
+// button with dropdown menu for filter and sort options
 @Composable
 fun FilterButton(
     text: String,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    options: List<String>,
+    onClick: (String?) -> Unit
 ) {
-    OutlinedButton(
-        onClick = onClick,
-        modifier = modifier
-            .width(100.dp)
-            .padding(10.dp), shape = RoundedCornerShape(50),
-        border = CardDefaults.outlinedCardBorder()
-    ) {
-        Text(text = text)
+    var isExpanded by remember { mutableStateOf(false) }
+    var currentFilterLabel by remember { mutableStateOf(text) }
 
+    Box(
+        modifier = Modifier
+    ) {
+        // title is set to current filter or sort option; not in sync with viewmodel!
+        OutlinedButton(
+            onClick = { isExpanded = !isExpanded },
+            modifier = modifier
+                .padding(10.dp), shape = RoundedCornerShape(50),
+            border = CardDefaults.outlinedCardBorder()
+        ) {
+            Text(text = currentFilterLabel)
+        }
+        // dropdown menu to select filter or sort option
+        DropdownMenu(
+            expanded = isExpanded,
+            onDismissRequest = { isExpanded = false }
+        ) {
+            DropdownMenuItem(
+                text = { Text("Clear filter") },
+                onClick = {
+                    currentFilterLabel = text
+                    onClick(null)
+                }
+            )
+            options.forEach {
+                DropdownMenuItem(
+                    text = { Text(it) },
+                    onClick = {
+                        currentFilterLabel = it
+                        onClick(it)
+                    }
+                )
+            }
+
+        }
     }
 }
 

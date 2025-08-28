@@ -53,6 +53,7 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
     implementation(libs.androidx.room.runtime)
+    implementation(libs.material3)
     ksp(libs.androidx.room.compiler)
     implementation(libs.hilt.android)
     implementation(libs.navigation.compose)

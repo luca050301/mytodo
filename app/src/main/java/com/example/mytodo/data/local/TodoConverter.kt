@@ -2,6 +2,9 @@ package com.example.mytodo.data.local
 
 import androidx.room.TypeConverter
 
+/**
+ * Converter for columns of the To-do Entity, converts date types to room friendly types
+ */
 class TodoConverter {
     @TypeConverter
     fun timestampLongToInstant(value: Long?): java.time.Instant? {

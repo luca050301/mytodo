@@ -25,12 +25,12 @@ object DatabaseModule {
 
     @Provides
     @Singleton
-    fun provideDatabase(@ApplicationContext context: Context) : TodoDatabase {
+    fun provideDatabase(@ApplicationContext context: Context): TodoDatabase {
         return Room.databaseBuilder(
             context,
             TodoDatabase::class.java,
             "todo_database"
-        ).build()
+        ).fallbackToDestructiveMigration(true).build()
     }
 
     @Provides

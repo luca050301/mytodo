@@ -7,7 +7,6 @@ import androidx.activity.enableEdgeToEdge
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.toRoute
 import com.example.mytodo.ui.theme.MyToDoTheme
 import com.example.mytodo.ui.todocreateedit.TodoCreateEditScreen
 import com.example.mytodo.ui.todolist.TodoListViewScreen
@@ -40,13 +39,14 @@ class MainActivity : ComponentActivity() {
                                 navController.popBackStack()
                             }
                         )
+                    }
                 }
             }
         }
-    }
 
+    }
 }
-}
+
 @Serializable
 object ListScreen
 

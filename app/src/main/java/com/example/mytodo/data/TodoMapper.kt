@@ -1,10 +1,11 @@
 package com.example.mytodo.data
 
 import com.example.mytodo.data.local.TodoEntity
+import com.example.mytodo.data.model.Todo
 import com.example.mytodo.data.remote.TodoDto
 import javax.inject.Inject
 
-class TodoMapper  @Inject constructor(){
+class TodoMapper @Inject constructor() {
     fun entityToModel(todoEntity: TodoEntity): Todo = Todo(
         id = todoEntity.id,
         title = todoEntity.title,
