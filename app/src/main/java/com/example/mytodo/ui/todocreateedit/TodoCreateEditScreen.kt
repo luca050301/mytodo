@@ -4,9 +4,13 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeContentPadding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
@@ -30,6 +34,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.mytodo.ui.shared.DateInput
 import com.example.mytodo.ui.shared.RecommendationsTextInput
@@ -98,6 +103,9 @@ fun TodoCreateEditScreen(
                     .fillMaxSize()
                     .safeContentPadding()
                     .padding(innerPadding)
+                    .verticalScroll(
+                        rememberScrollState()
+                    )
             )
         ) { // form fields
             // title input
@@ -148,6 +156,7 @@ fun TodoCreateEditScreen(
                 Button(onClick = onNavigateBack) {
                     Text(text = "Cancel")
                 }
+                Spacer(Modifier.width(10.dp))
                 Button(onClick = {
                     if (todo.title.isBlank()) {
                         showValidationFails = true
