@@ -44,6 +44,8 @@ fun TextInput(
     label: @Composable (() -> Unit)? = null,
     singleLine: Boolean = true,
     leadingIcon: @Composable (() -> Unit)? = null,
+    trailingIcon:@Composable (() -> Unit)? = null,
+    placeholder: @Composable (() -> Unit)? = null,
     isError: Boolean = false,
     supportingText: @Composable (() -> Unit)? = null,
     enabled: Boolean = true,
@@ -68,6 +70,8 @@ fun TextInput(
         onValueChange = onValueChange,
         label = label,
         leadingIcon = leadingIcon,
+        trailingIcon = trailingIcon,
+        placeholder = placeholder,
         shape = RoundedCornerShape(15),
         colors = TextFieldDefaults.colors(
             focusedContainerColor = colorFocused,

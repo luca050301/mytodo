@@ -1,6 +1,7 @@
 package com.example.mytodo.ui.todolist
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -35,7 +36,6 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -47,12 +47,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.mytodo.data.model.SortType
 import com.example.mytodo.data.model.Todo
+import com.example.mytodo.ui.shared.TextInput
+import com.example.mytodo.utils.DateUtils
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Preview
@@ -68,7 +72,19 @@ fun TodoListViewScreen(
     val searchFilters by viewModel.searchFilters.collectAsState()
     val labels by viewModel.labels.collectAsState()
 
+    // to unfocus the searchbar when clicking outside
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val focusManager = LocalFocusManager.current
     Scaffold(
+        modifier = Modifier.clickable(
+            indication = null,
+            interactionSource = remember {
+                MutableInteractionSource()
+            } // disable ripple effect
+        ) {
+            keyboardController?.hide()
+            focusManager.clearFocus()
+        },
         // top app bar
         topBar = {
             TopAppBar(
@@ -108,7 +124,7 @@ fun TodoListViewScreen(
                             viewModel.setSearchFilters(searchFilters.copy(oneOfLabels = setOf(it)))
                     },
                     onSortChange = {
-                        it?.let { viewModel.setSort(SortType.valueOf(it)) }
+                        it?.let { viewModel.setSort(SortType.from(it)) }
                     },
                     labels = labels
                 )
@@ -164,6 +180,7 @@ fun TodoListViewScreen(
 
 
 }
+
 // currently supports:
 // - search query for title and description
 // - filter by one label
@@ -178,12 +195,13 @@ fun SearchFilters(
     labels: List<String> = emptyList(),
 ) {
     // search bar
-    TextField(
+    TextInput(
         value = searchQuery ?: "",
         onValueChange = onSearchChange,
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 10.dp), placeholder = {
+            .padding(horizontal = 10.dp),
+        placeholder = {
             Text(text = "Search")
         },
         trailingIcon = {
@@ -205,7 +223,7 @@ fun SearchFilters(
         // sort
         FilterButton(
             text = "Sort",
-            options = SortType.entries.map { it.toString() }.toList(),
+            options = SortType.entries.map { it.asUIString }.toList(),
             onClick = onSortChange
         )
     }
@@ -256,7 +274,7 @@ fun TodoCard(
                     modifier = Modifier.weight(1f)
                 ) {
                     Text(
-                        text = todo.date.toLocalDate().toString(),
+                        text = DateUtils.formatDate(todo.date),
                     )
                     if (!todo.label.isNullOrEmpty())
                         Label(text = todo.label)
@@ -299,6 +317,7 @@ fun TodoCard(
         }
     }
 }
+
 // button with dropdown menu for filter and sort options
 @Composable
 fun FilterButton(
